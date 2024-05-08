@@ -1,15 +1,19 @@
-
-
-.course-card {
+.courses-panel {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .course-card {
     margin: 20px 10px;
-}
-
-.course-actions {
+  }
+  
+  .course-actions {
     display: flex;
-  justify-content: center;
-}
-
-.course-actions button {
-  margin-right: 5px;
-}
-
+    justify-content: center;
+  }
+  
+  .course-actions button {
+    display: flex;
+    justify-content: center;
+    margin-right: 5px;
+  }

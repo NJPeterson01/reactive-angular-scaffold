@@ -7,10 +7,9 @@ import {LoginComponent} from './login/login.component';
 import {SearchLessonsComponent} from './search-lessons/search-lessons.component';
 
 const routes: Routes = [
-  {
+  {//Root path of application
     path: '',
     component: HomeComponent
-
   },
   {
     path:"search-lessons",
@@ -28,7 +27,7 @@ const routes: Routes = [
     path: 'login',
     component: LoginComponent
   },
-  {
+  {//Any non-mapped location
     path: '**',
     redirectTo: '/'
   }
