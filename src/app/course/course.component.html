@@ -1,19 +1,31 @@
+<!-- 
+  It is not ideal to nest ng-containers. If end up nesting, consider
+  creating a single object that contains all the observables you require.
 
+  Reasons to not nest:
+  1) Bad user exerience. If the parent object loads later than the nested object,
+  there will be a terrible delay before data is shown.
+  2) Hard to mantain
+  3) Every nested container relies on the previous
+-->
+<ng-container *ngIf="(data$ | async) as data">
   <div class="course">
 
-    <h2>{{course?.description}}</h2>
+    <h2>{{data.course?.description}}</h2>
 
-    <img class="course-thumbnail" [src]="course?.iconUrl">
+    <!-- Prevent image from loading if it is not ready -->
+    <img class="course-thumbnail" [src]="data.course?.iconUrl" *ngIf="data.course">
 
-    <table class="lessons-table mat-elevation-z7">
+    <!-- Prevent table from loading until data is not ready -->
+    <table class="lessons-table mat-elevation-z7" *ngIf="data?.lessons?.length > 0">
 
       <thead>
-      <th>#</th>
-      <th>Description</th>
-      <th>Duration</th>
+        <th>#</th>
+        <th>Description</th>
+        <th>Duration</th>
       </thead>
 
-      <tr class="lesson-row" *ngFor="let lesson of lessons">
+      <tr class="lesson-row" *ngFor="let lesson of data.lessons">
         <td class="seqno-cell">{{lesson.seqNo}}</td>
         <td class="description-cell">{{lesson.description}}</td>
         <td class="duration-cell">{{lesson.duration}}</td>
@@ -22,11 +34,4 @@
     </table>
 
   </div>
-
-
-
-
-
-
-
-
+</ng-container>

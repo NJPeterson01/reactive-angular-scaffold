@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {Observable} from 'rxjs';
+import { LoadingService } from './loading.service';
 
 @Component({
   selector: 'loading',
@@ -8,14 +8,13 @@ import {Observable} from 'rxjs';
 })
 export class LoadingComponent implements OnInit {
 
-
-  constructor() {
+  // Only public services can be utilized directly in HTML
+  constructor( public loadingService: LoadingService) {
 
   }
 
   ngOnInit() {
 
   }
-
 
 }

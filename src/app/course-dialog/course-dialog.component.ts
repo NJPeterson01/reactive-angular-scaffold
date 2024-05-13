@@ -1,9 +1,14 @@
-import {AfterViewInit, Component, Inject} from '@angular/core';
+import { AfterViewInit, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import {Course} from "../model/course";
-import {FormBuilder, Validators, FormGroup} from "@angular/forms";
+import { Course } from "../model/course";
+import { FormBuilder, Validators, FormGroup } from "@angular/forms";
 import * as moment from 'moment';
 import { CoursesService } from '../services/courses.service';
+import { LoadingService } from '../loading/loading.service';
+import { MessagesService } from '../messages/messages.service';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
+import { CoursesStore } from '../services/course.store';
 
 /*
     This component is utilized like a modal. It pops up when the user wants 
@@ -13,7 +18,11 @@ import { CoursesService } from '../services/courses.service';
 @Component({
     selector: 'course-dialog',
     templateUrl: './course-dialog.component.html',
-    styleUrls: ['./course-dialog.component.css']
+    styleUrls: ['./course-dialog.component.css'],
+    providers: [
+        LoadingService,
+        MessagesService
+    ]
 })
 export class CourseDialogComponent implements AfterViewInit {
 
@@ -27,8 +36,11 @@ export class CourseDialogComponent implements AfterViewInit {
     constructor(
         private fb: FormBuilder,
         private dialogRef: MatDialogRef<CourseDialogComponent>,
-        private courseService: CoursesService,
-        @Inject(MAT_DIALOG_DATA) course:Course) {
+        //private courseService: CoursesService,//Removed in favor of optimistic data approach
+        //private loadingService: LoadingService,//Removed in favor of optimistic data approach
+        private courseStore: CoursesStore,
+        public messageService: MessagesService,
+        @Inject(MAT_DIALOG_DATA) course: Course) {
 
         this.course = course;
 
@@ -36,7 +48,7 @@ export class CourseDialogComponent implements AfterViewInit {
             description: [course.description, Validators.required],
             category: [course.category, Validators.required],
             releasedAt: [moment(), Validators.required],
-            longDescription: [course.longDescription,Validators.required]
+            longDescription: [course.longDescription, Validators.required]
         });
 
     }
@@ -47,17 +59,37 @@ export class CourseDialogComponent implements AfterViewInit {
 
     save() {
 
-      const changes = this.form.value;
+        const changes = this.form.value;
 
-      // Manual subscription cannot always be avoided. Here, it is necessary.
-      this.courseService.saveCourse(this.course.id, changes)
-        .subscribe(
-            (val) => {
-                // Closing with value is recommended so you can determine if the modal was closed via
-                // the 'close' button or by a successful save.
-                this.dialogRef.close(val);
-            }
-        );
+        // Standard approach (save and loading)
+        /*
+        const saveCourse$ = this.courseService.saveCourse(this.course.id, changes)
+            .pipe(
+                catchError( err => {
+                    const message = "Could not save course";
+                    console.log(message, err);
+                    this.messageService.showErrors(message);
+                    return throwError(err);
+                })
+            );
+        */
+
+        // Optimistic data approach (save locally, invisible background save)
+        this.courseStore.saveCourse(this.course.id, changes).subscribe();
+        this.dialogRef.close(changes);
+
+        // Standard approach (show loading indicator)
+        /*
+        // Manual subscription cannot always be avoided. Here, it is necessary.
+        this.loadingService.showLoaderUntilCompleted(saveCourse$)
+            .subscribe(
+                (val) => {
+                    // Closing with value is recommended so you can determine if the modal was closed via
+                    // the 'close' button or by a successful save.
+                    this.dialogRef.close(val);
+                }
+            );
+        */
 
     }
 

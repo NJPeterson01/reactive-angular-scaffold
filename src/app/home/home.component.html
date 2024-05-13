@@ -4,17 +4,30 @@
 
   <mat-tab-group>
 
+    <!-- Standard Approach -->
     <!-- Angular async pipe automatically subscribes to variable and gets value -->
     <!-- Async pipe will automatically unsubscribe to prevent memory leaks as well -->
+    <!--
     <mat-tab label="Beginners">
       <courses-card-list [courses]="beginnerCourses$ | async" (coursesChanged)="reloadCourses()"></courses-card-list>
     </mat-tab>
 
     <mat-tab label="Advanced">
       <courses-card-list [courses]="advancedCourses$ | async" (coursesChanged)="reloadCourses()"></courses-card-list>
+    -->
 
-      <!-- Because this logic is identical to the Beginners Logic, it was moved to CoursesCardList-->
-      <!--
+    <!-- Optimistic Approach (no reloading) -->
+    <mat-tab label="Beginners">
+      <courses-card-list [courses]="beginnerCourses$ | async"></courses-card-list>
+    </mat-tab>
+
+    <mat-tab label="Advanced">
+      <courses-card-list [courses]="advancedCourses$ | async"></courses-card-list>
+
+
+    <!-- Original Code -->
+    <!-- Because this logic is identical to the Beginners Logic, it was moved to CoursesCardList-->
+    <!--
       <mat-card *ngFor="let course of ( advancedCourses$ | async )" class="course-card mat-elevation-z10">
 
         <mat-card-header>

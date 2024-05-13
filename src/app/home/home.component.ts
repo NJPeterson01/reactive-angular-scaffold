@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Course, sortCoursesBySeqNo } from '../model/course';
 import { CoursesService } from '../services/courses.service';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, finalize, map } from 'rxjs/operators';
+import { LoadingService } from '../loading/loading.service';
+import { MessagesService } from '../messages/messages.service';
+import { CoursesStore } from '../services/course.store';
 
   /*
     This is considered a 'Smart Component'. It has little presentation logic and more
@@ -22,7 +25,7 @@ import { map } from 'rxjs/operators';
 })
 export class HomeComponent implements OnInit {
 
-  // ---- Original code ----
+  // -------- Original code --------
 
   /* 
     This component knows too much.
@@ -85,17 +88,20 @@ export class HomeComponent implements OnInit {
 
   */
 
-  //---- Refactored Code -----
+  //-------- Refactored Code (stateless) ---------
   /* 
     In the view layer, it is ideal to have most variables as (reactive style) observables and
     not mutable vairables. They should not know where the data they receive is coming from.
   */
+ /*
   beginnerCourses$: Observable<Course[]>;
   advancedCourses$: Observable<Course[]>;
 
   // The courses service abstracts out how the system gets the data this component requires.
   constructor(
-    private coursesService: CoursesService) {
+    private coursesService: CoursesService,
+    private loadingService: LoadingService,
+    private messagesService: MessagesService) {
   }
 
   // This method should never be called directly or contain important business logic
@@ -104,23 +110,61 @@ export class HomeComponent implements OnInit {
   }
 
   reloadCourses() {
+
     // '$' should be appended to any variable that is an observable.
     // Returned values should always be constants
     const courses$ = this.coursesService.loadAllCourses()
       .pipe(
-        map(courses => courses.sort(sortCoursesBySeqNo))
+        map(courses => courses.sort(sortCoursesBySeqNo)),
+        catchError(err => {
+          const message = "Could not load courses";
+          this.messagesService.showErrors(message);
+          console.log(message, err);
+
+          // CatchError must throw an observable. 
+          // Throw Error throws an observable that immediately errors out and ends
+          return throwError(err);
+        })
       );
 
+    const loadCourses$ = this.loadingService.showLoaderUntilCompleted(courses$);
+
     // Definition of observables
-    this.beginnerCourses$ = courses$
+    this.beginnerCourses$ = loadCourses$
       .pipe(
         map(courses => courses.filter(course => course.category == "BEGINNER"))
       );
 
-    this.advancedCourses$ = courses$
+    this.advancedCourses$ = loadCourses$
       .pipe(
         map(courses => courses.filter(course => course.category == "ADVANCED"))
       );
+  }
+  */
+
+  //---- Refactored Code (stateful)-----
+
+  /*
+    We are abstracting out the course filter implementation and moving it
+    to the store where the service will perform error handling, loading, and messaging.
+  */
+
+  beginnerCourses$: Observable<Course[]>;
+  advancedCourses$: Observable<Course[]>;
+
+  constructor(
+    private coursesStore: CoursesStore) {
+  }
+
+  ngOnInit() {
+    this.reloadCourses();
+  }
+
+  reloadCourses() {
+
+    // Definition of observables
+    this.beginnerCourses$ = this.coursesStore.filterByCategory("BEGINNER");
+    this.advancedCourses$ = this.coursesStore.filterByCategory("ADVANCED");
   }
 
 }
